@@ -1,0 +1,27 @@
+<!DOCTYPE html>
+<html>
+	<head>
+		<title>persephone context menu upload options</title>
+	</head>
+	<body>
+		<h2>Add a persephone instance</h2>
+		<form id="add_form">
+			<label>Context submenu title</label>
+			<input type="text" id="title">
+			<br>
+			<label>Instance URI (including protocol)</label>
+			<input type="text" id="uri">
+			<br>
+			<input type="submit" value="Add">
+		</form>
+		<form id="instances_form">
+			<h2>Edit instances</h2>
+			<div id="instance_containers"></div>
+			<hr>
+			<input type="submit" value="Save">
+		</form>
+		<h2>Misc</h2>
+		<button id="clear">Clear all</button>
+		<script src="options.js"></script>
+	</body>
+</html>

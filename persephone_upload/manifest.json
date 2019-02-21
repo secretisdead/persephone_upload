@@ -1,0 +1,48 @@
+{
+	"manifest_version": 2,
+   "name": "persephone context menu upload",
+   "version": "1.0",
+	"description": "Upload to persephone instances via context menu",
+	"icons": {
+		"16": "images/icon16.png",
+		"24": "images/icon24.png",
+		"32": "images/icon32.png",
+		"64": "images/icon64.png"
+	},
+	"browser_action": {
+		"default_icon": {
+			"16": "images/icon16.png",
+			"24": "images/icon24.png",
+			"32": "images/icon32.png",
+			"64": "images/icon64.png"
+		},
+		"default_title": "Configure persephone context menu upload"
+	},
+	"options_ui": {
+		"page": "options.html",
+		"open_in_tab": false
+	},
+	"author": "secret",
+	"background" : {
+		"scripts": ["background.js"],
+		"persistent": true
+	},
+   "minimum_chrome_version": "6",
+   "permissions": [
+		"contextMenus",
+		"tabs",
+		"http://*/*",
+		"https://*/*",
+		"storage"
+	],
+	"content_scripts": [
+		{
+			"matches": [
+				"http://*/*",
+				"https://*/*"
+			],
+			"js": ["get_target.js"]
+		}
+	],
+	"short_name": "pspn upload"
+}
