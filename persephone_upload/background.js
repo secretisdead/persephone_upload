@@ -18,7 +18,23 @@ function generate_context_menus() {
 				return;
 			}
 			instances = JSON.parse(data.instances);
-			if (0 < instances.length) {
+			if (1 == instances.length) {
+				let instance = instances[0];
+				chrome.contextMenus.create({
+					title: 'Upload to persephone ' + instance['title'],
+					id: 'persephone_upload',
+					contexts : [
+						'selection',
+						'video',
+						'image',
+						'link',
+					],
+					onclick: (info, tab) => {
+						handle_upload_request(instance, info, tab);
+					},
+				});
+			}
+			else if (1 < instances.length) {
 				chrome.contextMenus.create({
 					title: 'Upload to persephone',
 					id: 'persephone_upload',
