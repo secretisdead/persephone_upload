@@ -95,6 +95,7 @@ function handle_upload_request(instance, info, tab) {
 			message: 'get_target',
 			attribute: attribute,
 			uri: uri,
+			instance: instance,
 		},
 		(response) => {
 			let fd = new FormData();

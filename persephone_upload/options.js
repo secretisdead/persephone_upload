@@ -28,6 +28,8 @@ function add_instance() {
 			uri: uri,
 			settings: {
 				generate_summaries: true,
+				filename_tag: 0,
+				mirror_tag: 0,
 				owner_id: '',
 				searchability: 'hidden',
 				protection: 'none',
@@ -152,6 +154,19 @@ function create_instance_container(instance) {
 	filename_tag_input.addEventListener('change', change_instance_checkbox_setting);
 	instance_container.appendChild(filename_tag_label);
 	instance_container.appendChild(filename_tag_input);
+	instance_container.appendChild(document.createElement('br'));
+
+	let mirror_tag_label = document.createElement('label');
+	mirror_tag_label.innerText = 'Mirror tag';
+	let mirror_tag_input = document.createElement('input');
+	mirror_tag_input.type = 'checkbox';
+	mirror_tag_input.dataset.field = 'mirror_tag';
+	if (instance.settings.mirror_tag) {
+		mirror_tag_input.checked = true;
+	}
+	mirror_tag_input.addEventListener('change', change_instance_checkbox_setting);
+	instance_container.appendChild(mirror_tag_label);
+	instance_container.appendChild(mirror_tag_input);
 	instance_container.appendChild(document.createElement('br'));
 
 	let owner_id_label = document.createElement('label');

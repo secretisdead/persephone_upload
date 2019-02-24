@@ -4,6 +4,7 @@ chrome.runtime.onMessage.addListener((request, sender, sendResponse) => {
 	if ('get_target' != request.message) {
 		return false;
 	}
+	let instance = request.instance;
 
 	let site = '';
 	if (-1 != window.location.host.search(/tumblr/)) {
@@ -36,10 +37,12 @@ chrome.runtime.onMessage.addListener((request, sender, sendResponse) => {
 			let source = post.querySelector('.post-source-link.post_info_link[data-peepr]');
 			if (source) {
 					let peepr = JSON.parse(source.dataset.peepr);
-					tags += '#mirror:http://' + peepr.tumblelog + '.tumblr.com/post/' + peepr.postId;
 					tags += '#author:' + peepr.tumblelog;
+					if (instance.settings.mirror_tag) {
+						tags += '#mirror:http://' + peepr.tumblelog + '.tumblr.com/post/' + peepr.postId;
+					}
 			}
-			else {
+			else if (instance.settings.mirror_tag) {
 				tags += '#mirror:' + 'http://' + post.dataset.tumblelog + '.tumblr.com/post/' + post.dataset.id;
 			}
 		}
@@ -60,8 +63,10 @@ chrome.runtime.onMessage.addListener((request, sender, sendResponse) => {
 			post = null;
 		}
 		else {
-			tags += '#mirror:' + post.querySelector('.tweet-timestamp a').href;
 			tags += '#author:' + post.querySelector('.tweet-header .username').innerText.substring(1);
+			if (instance.settings.mirror_tag) {
+				tags += '#mirror:' + post.querySelector('.tweet-timestamp a').href;
+			}
 		}
 		if ('mediaPreview' == target.rel && post) {
 			let media_previews = post.querySelectorAll('[rel="mediaPreview"][' + attribute + '="' + uri + '"]');
@@ -113,8 +118,10 @@ chrome.runtime.onMessage.addListener((request, sender, sendResponse) => {
 			if (!post.classList.contains('tweet')) {
 				post = post.querySelector('.tweet');
 			}
-			tags += '#mirror:https://twitter.com' + post.dataset.permalinkPath;
 			tags += '#author:' + post.dataset.screenName;
+			if (instance.settings.mirror_tag) {
+				tags += '#mirror:https://twitter.com' + post.dataset.permalinkPath;
+			}
 			post = post_container;
 		}
 	}
