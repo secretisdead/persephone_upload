@@ -119,22 +119,24 @@ function handle_upload_request(instance, info, tab) {
 						let start_position = xhr.response.thumbnail.indexOf('a href=') + 8;
 						let view_uri = xhr.response.thumbnail.substring(start_position);
 						let end_position = view_uri.indexOf('"');
-						uri += '&view_uri=' + view_uri.substring(0, end_position);
+						chrome.tabs.create({
+							url: instance.uri + view_uri.substring(0, end_position),
+							active: false,
+						});
+						return;
 					}
-					else {
-						if (409 == xhr.status) {
-							uri += '&view_uri=' + xhr.response.view_uri;
+					if (409 == xhr.status) {
+						uri += '&view_uri=' + xhr.response.view_uri;
+					}
+					if (
+						xhr.response
+						&& xhr.response.errors
+					) {
+						let errors = '';
+						for (let i = 0; i < xhr.response.errors.length; i++) {
+							errors += xhr.response.errors[i] + ', ';
 						}
-						if (
-							xhr.response
-							&& xhr.response.errors
-						) {
-							let errors = '';
-							for (let i = 0; i < xhr.response.errors.length; i++) {
-								errors += xhr.response.errors[i] + ', ';
-							}
-							uri += '&errors=' + errors.substring(0, errors.length - 2);
-						}
+						uri += '&errors=' + errors.substring(0, errors.length - 2);
 					}
 					chrome.tabs.create({
 						url: uri,
