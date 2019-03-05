@@ -151,6 +151,7 @@ chrome.runtime.onMessage.addListener((request, sender, sendResponse) => {
 				':small',
 				':medium',
 				':large',
+				':orig',
 			];
 			for (let i in formats) {
 				uri = uri.replace(formats[i], '');
