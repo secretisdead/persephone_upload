@@ -98,6 +98,9 @@ function handle_upload_request(instance, info, tab) {
 			instance: instance,
 		},
 		(response) => {
+			if (!response) {
+				return;
+			}
 			let fd = new FormData();
 			if (instance.settings.generate_summaries) {
 				fd.append('generate_summaries', 1);
