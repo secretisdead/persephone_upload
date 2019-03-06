@@ -22,6 +22,10 @@ chrome.runtime.onMessage.addListener((request, sender, sendResponse) => {
 	let tags = '';
 	let post = null;
 	let target = document.querySelector('[' + attribute + '="' + uri + '"]');
+	if (!target) {
+		alert('Problem getting target, try opening the file directly');
+		return false;
+	}
 	if ('tumblr' == site) {
 		post = target;
 		while (
