@@ -22,6 +22,12 @@ chrome.runtime.onMessage.addListener((request, sender, sendResponse) => {
 	let tags = '';
 	let post = null;
 	let target = document.querySelector('[' + attribute + '="' + uri + '"]');
+	if (!target && 'src' == attribute) {
+		target = document.querySelector('[srcset*="' + uri + '"]');
+		if (target && !target.hasOwnProperty('src')) {
+			target.src = uri;
+		}
+	}
 	if (!target) {
 		alert('Problem getting target, try opening the file directly');
 		return false;
