@@ -179,7 +179,7 @@ chrome.runtime.onMessage.addListener((request, sender, sendResponse) => {
 				}
 				else {
 					alert('Twitter post contains a non-mp4 video, unable to upload directly');
-					return;
+					return false;
 				}
 			}
 		}
