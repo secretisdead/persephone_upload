@@ -155,6 +155,14 @@ chrome.runtime.onMessage.addListener((request, sender, sendResponse) => {
 			}
 		}
 		else if (-1 != uri.search(/twimg/) && -1 == uri.search(/tweet_video/)) {
+			// new twitter image format
+			let format_pos = uri.indexOf('format=');
+			if (-1 != format_pos) {
+				let query_pos = uri.indexOf('?');
+				let format_extension = uri.substring(format_pos + 7, format_pos + 10);
+				let base_uri = uri.substring(0, query_pos);
+				uri = base_uri + '.' + format_extension;
+			}
 			// get twitter orig image
 			let formats = [
 				':thumb',
