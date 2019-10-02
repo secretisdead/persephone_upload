@@ -174,7 +174,6 @@ chrome.runtime.onMessage.addListener((request, sender, sendResponse) => {
 			for (let i in formats) {
 				uri = uri.replace(formats[i], '');
 			}
-			uri += ':orig';
 		}
 	}
 	else if (post) {
