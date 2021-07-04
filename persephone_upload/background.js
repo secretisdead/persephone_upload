@@ -1,6 +1,11 @@
 'use strict';
 
-chrome.browserAction.onClicked.addListener((tab) => {
+chrome.runtime.onInstalled.addListener(function() {
+	generate_context_menus();
+	console.log('installed persephone upload service worker');
+});
+
+chrome.action.onClicked.addListener((tab) => {
 	if (chrome.runtime.openOptionsPage) {
 		chrome.runtime.openOptionsPage();
 	}
@@ -9,9 +14,19 @@ chrome.browserAction.onClicked.addListener((tab) => {
 	}
 });
 
-let instances = [];
+chrome.contextMenus.onClicked.addListener(function(info, tab) {
+	if (-1 == info.menuItemId.indexOf(':')) {
+		return;
+	}
+	let instance = info.menuItemId.split(':');
+	instance.shift();
+	instance = instance.join(':');
+	instance = JSON.parse(instance);
+	handle_upload_request(instance, info, tab);
+});
 
 function generate_context_menus() {
+	let instances = [];
 	chrome.contextMenus.removeAll(() => {
 		chrome.storage.sync.get(['instances'], (data) => {
 			if (!data.instances) {
@@ -21,23 +36,20 @@ function generate_context_menus() {
 			if (1 == instances.length) {
 				let instance = instances[0];
 				chrome.contextMenus.create({
+					id: 'persephone_upload:' + JSON.stringify(instance),
 					title: 'Upload to persephone ' + instance['title'],
-					id: 'persephone_upload',
 					contexts : [
 						'selection',
 						'video',
 						'image',
 						'link',
 					],
-					onclick: (info, tab) => {
-						handle_upload_request(instance, info, tab);
-					},
 				});
 			}
 			else if (1 < instances.length) {
 				chrome.contextMenus.create({
-					title: 'Upload to persephone',
 					id: 'persephone_upload',
+					title: 'Upload to persephone',
 					contexts : [
 						'selection',
 						'video',
@@ -48,7 +60,8 @@ function generate_context_menus() {
 				for (let i = 0; i < instances.length; i++) {
 					let instance = instances[i];
 					chrome.contextMenus.create({
-						'title': instance['title'],
+						id: 'persephone_upload:' + JSON.stringify(instance),
+						title: instance['title'],
 						parentId: 'persephone_upload',
 						contexts : [
 							'selection',
@@ -56,9 +69,6 @@ function generate_context_menus() {
 							'image',
 							'link',
 						],
-						onclick: (info, tab) => {
-							handle_upload_request(instance, info, tab);
-						},
 					});
 				}
 			}
@@ -72,7 +82,32 @@ chrome.runtime.onMessage.addListener((request, sender) => {
 	}
 });
 
-generate_context_menus();
+function handle_fetch_response(instance, uri, page, response) {
+	let uploadResultURI = '/upload_result.html?status=' + response.status + '&title=' + instance.title + '&instance_uri=' + instance.uri + '&uri=' + uri + '&page=' + page;
+	if (response.ok) {
+		let start_position = response.json.thumbnail.indexOf('a href=') + 8;
+		let view_uri = response.json.thumbnail.substring(start_position);
+		let end_position = view_uri.indexOf('"');
+		chrome.tabs.create({
+			url: instance.uri + view_uri.substring(0, end_position),
+			active: false,
+		});
+		return;
+	}
+	if (409 == response.status) {
+		uploadResultURI += '&view_uri=' + response.json.view_uri;
+		chrome.tabs.create({
+			url: uploadResultURI,
+			active: false,
+		});
+	}
+	else {
+		chrome.tabs.create({
+			url: uploadResultURI,
+			active: false,
+		});
+	}
+};
 
 function handle_upload_request(instance, info, tab) {
 	let attribute = '';
@@ -101,6 +136,16 @@ function handle_upload_request(instance, info, tab) {
 			if (!response) {
 				return;
 			}
+			if (response.reupload) {
+				chrome.windows.create({
+					focused: true,
+					type: 'popup',
+					//width: 256,
+					height: 256,
+					url: chrome.runtime.getURL('v3/reupload.html?uri=' + encodeURIComponent(response.uri) + '&page=' + encodeURIComponent(response.page) + '&instance=' + JSON.stringify(instance) + '&tags=' + encodeURIComponent(response.tags)),
+				});
+				return;
+			}
 			let fd = new FormData();
 			if (instance.settings.generate_summaries) {
 				fd.append('generate_summaries', 1);
@@ -113,46 +158,57 @@ function handle_upload_request(instance, info, tab) {
 			fd.append('protection', instance.settings.protection);
 			fd.append('creation_date', instance.settings.creation_date);
 			fd.append('tags', instance.settings.tags + '#' + response.tags);
-			fd.append('file_uri', response.uri);
 			fd.append('view_endpoint', 'persephone.search_public_media');
-			let xhr = new XMLHttpRequest();
-			xhr.onreadystatechange = () => {
-				if (xhr.readyState == XMLHttpRequest.DONE) {
-					let uri = '/upload_result.html?status=' + xhr.status + '&title=' + instance.title + '&instance_uri=' + instance.uri + '&uri=' + response.uri;
-					if (200 == xhr.status) {
-						let start_position = xhr.response.thumbnail.indexOf('a href=') + 8;
-						let view_uri = xhr.response.thumbnail.substring(start_position);
-						let end_position = view_uri.indexOf('"');
-						chrome.tabs.create({
-							url: instance.uri + view_uri.substring(0, end_position),
-							active: false,
-						});
-						return;
-					}
-					if (409 == xhr.status) {
-						uri += '&view_uri=' + xhr.response.view_uri;
-					}
-					if (
-						xhr.response
-						&& xhr.response.errors
-					) {
-						let errors = '';
-						for (let i = 0; i < xhr.response.errors.length; i++) {
-							errors += xhr.response.errors[i] + ', ';
-						}
-						uri += '&errors=' + errors.substring(0, errors.length - 2);
-					}
-					chrome.tabs.create({
-						url: uri,
-						active: false,
+			fd.append('file_uri', response.uri);
+
+			let action = instance.uri + '/api/media/medium/upload';
+			action = action + (-1 != action.indexOf('?') ? '&' : '?') + '_' + new Date().getTime();
+			let options = {
+				method: 'POST',
+				credentials: 'include',
+				body: fd,
+			};
+			fetch(action, options).then(fetchResponse => {
+				let simpleResponse = {
+					status: fetchResponse.status,
+					ok: fetchResponse.ok,
+					json: [],
+				};
+				if (fetchResponse.ok || 409 == simpleResponse.status) {
+					fetchResponse.json().then(fetchResponse => {
+						simpleResponse.json = fetchResponse;
+						handle_fetch_response(
+							instance,
+							response.uri,
+							response.page,
+							simpleResponse
+						);
 					});
 				}
-			};
-			let action = instance.uri + '/api/media/medium/upload';
-			xhr.open('POST', action + (-1 != action.indexOf('?') ? '&' : '?') + '_' + new Date().getTime(), true);
-			xhr.withCredentials = true;
-			xhr.responseType = 'json';
-			xhr.send(fd);
-		},
+				else {
+					handle_fetch_response(
+						instance,
+						response.uri,
+						response.page,
+						simpleResponse
+					);
+				}
+			});
+		}
 	);
 }
+
+// handle finished reupload
+chrome.runtime.onMessage.addListener((request, sender) => {
+	if ('reupload_finished' != request.message) {
+		return false;
+	}
+	handle_fetch_response(
+		JSON.parse(request.instance),
+		request.uri,
+		request.page,
+		JSON.parse(request.simpleResponse)
+	);
+	// close popup tab
+	chrome.tabs.remove(sender.tab.id);
+});

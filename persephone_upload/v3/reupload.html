@@ -1,0 +1,23 @@
+<!doctype html>
+<html>
+	<head>
+		<style type="text/css">
+			#downloading,
+			#uploading,
+			[for=file_upload],
+			#file_upload {
+				display: none;
+			}
+		</style>
+	</head>
+	<body>
+		<button id="download">Store temp download</button><br>
+		<div id="downloading">Downloading, please wait...</div>
+		<div id="uploading">Uploading and processing, please wait...</div>
+		<form method="post" enctype="multipart/form-data">
+			<label for="file_upload">Attach the temp download <strong id="path"></strong></label>
+			<input id="file_upload" name="file_upload" type="file" required="">
+		</form>
+		<script type="text/javascript" src="reupload.js"></script>
+	</body>
+</html>

@@ -1,0 +1,20 @@
+#pixiv-manual-download-reupload {
+	display: block;
+	width: 100vw;
+	height: 100vh;
+	position: fixed;
+	top: 0;
+	left: 0;
+	background-color: #f00;
+	z-index: 1000;
+	font-size: 18px;
+	background-color: #000;
+	color: #fff;
+}
+#pixiv-manual-download-reupload a {
+	cursor: pointer;
+	text-decoration: underline;
+}
+#pixiv-manual-download-reupload input {
+	width: 75%;
+}

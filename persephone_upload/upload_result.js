@@ -7,7 +7,11 @@ document.querySelector('#title').innerText = params.get('title');
 
 let uri = document.querySelector('#uri');
 uri.href = params.get('uri');
-uri.innerText = params.get('uri');
+uri.innerText = decodeURI(params.get('uri'));
+
+let page = document.querySelector('#page');
+page.href = params.get('page');
+page.innerText = params.get('page');
 
 if (params.get('errors')) {
 	document.querySelector('#errors').innerText = params.get('errors');
